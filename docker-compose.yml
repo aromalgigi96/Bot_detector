@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  zookeeper: …           # Confluent ZK
+  kafka: …               # Confluent Kafka
+  nginx:                 # edge proxy + Lua
+    build: ./infra/nginx
+    depends_on: [kafka]
+    ports: ["80:80"]
+  redis: …               # in-memory cache
+  postgres: …            # durable store
+  api:                   # FastAPI stub
+    build: .
+    depends_on: [kafka, redis, postgres]
