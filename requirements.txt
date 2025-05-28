@@ -4,3 +4,4 @@ fastapi
 uvicorn[standard]
 confluent-kafka
 scikit-learn
+confluent-kafka
