@@ -1,13 +1,80 @@
-version: '3.8'
 services:
-  zookeeper: …           # Confluent ZK
-  kafka: …               # Confluent Kafka
-  nginx:                 # edge proxy + Lua
-    build: ./infra/nginx
-    depends_on: [kafka]
-    ports: ["80:80"]
-  redis: …               # in-memory cache
-  postgres: …            # durable store
-  api:                   # FastAPI stub
-    build: .
-    depends_on: [kafka, redis, postgres]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+  nginx:
+    build:
+      context: ./infra/nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    depends_on:
+      - kafka
+    ports:
+      - "80:80"
+
+  redis:
+    image: redis:6
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_DB: botdb
+      POSTGRES_USER: botuser
+      POSTGRES_PASSWORD: botpass
+    ports:
+      - "5432:5432"
+
+  bot-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bot-api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - kafka
+      - redis
+      - postgres
+    ports:
+      - "8000:8000"
+
+  feature-extractor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: feature-extractor
+    command: python -u -m app.consumers.feature_extractor
+    depends_on:
+      - kafka
+  
+  scorer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scorer
+    command: python -u -m app.consumers.scorer
+    depends_on:
+      - kafka
+
+
