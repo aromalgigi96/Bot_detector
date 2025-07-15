@@ -1,16 +1,25 @@
-# Bot_detector/Dockerfile
-
+# Dockerfile.feature-extractor
 FROM python:3.11-slim
 
-# 1) Set working directory
+# Set working dir
 WORKDIR /app
 
-# 2) Copy & install dependencies
+# Copy requirements.txt
 COPY requirements.txt .
+
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 3) Copy your application code
-COPY . .
+# Copy application code
+COPY app/consumers/feature_extractor.py app/utils/features.py app/utils/__init__.py app/consumers/__init__.py ./
 
-# 4) Default command (for the API)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# If features.py imports other modules or packages, copy entire utils:
+# COPY app/utils/ app/utils/
+# COPY app/consumers/ app/consumers/
+
+# Note: Above we copied specific files; if you have more code under app/utils or app/consumers, copy whole directories:
+COPY app/utils/ app/utils/
+COPY app/consumers/ app/consumers/
+
+# Entry point
+CMD ["python", "-u", "app/consumers/feature_extractor.py"]

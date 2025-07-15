@@ -1,0 +1,18 @@
+.App { font-family: sans-serif; padding:1rem; }
+nav a { margin-right: .5rem; color:#0366d6; text-decoration:none; }
+form { display:flex; flex-direction:column; max-width:300px; }
+label { margin: .5rem 0; }
+input { padding: .3rem; }
+button { margin-top: .5rem; padding: .5rem; }
+.attack { color: red; }
+.benign { color: green; }
+table { width:100%; border-collapse: collapse; margin-top:1rem; }
+th, td { border:1px solid #ccc; padding:.5rem; text-align:left; }
+.attack { color: red; }
+.benign { color: green; }
+button {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
