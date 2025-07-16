@@ -59,7 +59,6 @@ venv.bak/
 
 # Data & Notebooks (Project-Specific)
 data/
-notebooks/
 *.csv
 *.zip
 *.parquet
