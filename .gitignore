@@ -63,7 +63,7 @@ data/
 *.zip
 *.parquet
 *.xlsx
-*.txt
+
 
 # Model artifacts
 *.pkl
