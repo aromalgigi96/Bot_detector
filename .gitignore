@@ -49,7 +49,6 @@ cover/
 .ipynb_checkpoints
 
 # Environments
-.env
 .venv
 env/
 venv/
