@@ -65,9 +65,9 @@ data/
 
 
 # Model artifacts
-*.pkl
+
 *.h5
-*.joblib
+
 
 # Logs
 *.log
