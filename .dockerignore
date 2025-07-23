@@ -24,3 +24,9 @@ data/processed/
 notebooks/*.ipynb
 
 # But DO NOT ignore requirements.txt, Dockerfile, or docker-compose.yml
+!requirements.txt
+!Dockerfile*
+!docker-compose.yml
+
+# Explicitly include app/models/
+!app/models/

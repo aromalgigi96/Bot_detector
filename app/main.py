@@ -2,8 +2,8 @@ import os
 import logging
 from datetime import datetime, timedelta
 
-import lightgbm as lgb
 import pandas as pd
+import joblib
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
@@ -17,7 +17,7 @@ from sqlmodel import Session
 
 # --- FastAPI setup ---
 logging.basicConfig(level=logging.INFO)
-app = FastAPI(title="Bot Detector API", version="0.1.0")
+app = FastAPI(title="Bot Detector API", version="0.2.0")
 
 # --- Ensure tables exist ---
 @app.on_event("startup")
@@ -25,28 +25,26 @@ def on_startup():
     SQLModel.metadata.create_all(engine)
     logging.info("Database tables created/verified.")
 
-# --- Load ML model (optional) ---
-MODEL_PATH = os.getenv("MODEL_PATH", "/app/notebooks/final_lightgbm_tuned.txt")
+# --- Load Ensemble Model ---
+ENSEMBLE_MODEL_PATH = os.getenv("ENSEMBLE_MODEL_PATH", "/app/models/ensemble_classifier.pkl")
 try:
-    booster = lgb.Booster(model_file=MODEL_PATH)
-    logging.info(f"Loaded model from {MODEL_PATH}")
+    ensemble_model = joblib.load(ENSEMBLE_MODEL_PATH)
+    logging.info(f"Loaded ENSEMBLE model from {ENSEMBLE_MODEL_PATH}")
 except Exception as e:
-    booster = None
-    logging.warning(f"Could not load LightGBM model ({e}), falling back to threshold.")
+    ensemble_model = None
+    logging.warning(f"Could not load ensemble model ({e}), falling back to threshold logic.")
 
 # --- JWT config ---
 JWT_SECRET = os.getenv("JWT_SECRET", "your_jwt_secret_here")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
 
 def verify_token(token: str) -> dict:
     try:
@@ -55,7 +53,6 @@ def verify_token(token: str) -> dict:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired")
     except jwt.PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
 
 def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Depends(get_session)) -> User:
     payload = verify_token(token)
@@ -67,12 +64,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
 
-
 # --- Request schemas ---
 class RegisterRequest(BaseModel):
     username: str
     password: str
-
 
 class LoginRequest(BaseModel):
     username: str
@@ -82,9 +77,8 @@ class LoginRequest(BaseModel):
     timestamp: float
     time_to_submit: float
 
-
 # --- Registration endpoint ---
-@app.post("/register")
+@app.post("/api/register")
 def register(payload: RegisterRequest, session: Session = Depends(get_session)):
     existing = session.exec(select(User).where(User.username == payload.username)).first()
     if existing:
@@ -97,24 +91,34 @@ def register(payload: RegisterRequest, session: Session = Depends(get_session)):
     session.commit()
     return {"message": "User registered successfully."}
 
-
 # --- Login endpoint (issues JWT) ---
-@app.post("/login")
+@app.post("/api/login")
 def login(req: LoginRequest, session: Session = Depends(get_session)):
     # 1) Authenticate
     user = session.exec(select(User).where(User.username == req.username)).first()
     if not user or not bcrypt.verify(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-    # 2) Bot-detection w/ fallback
+    # 2) Bot-detection with ENSEMBLE
     try:
-        if booster:
-            prob = float(booster.predict(pd.DataFrame([{"time_to_submit": req.time_to_submit}]))[0])
+        if ensemble_model:
+            # Build input dataframe for ensemble model. Adjust as per your ensemble features!
+            features_dict = {
+                "time_to_submit": req.time_to_submit,
+                "failed_login_count_last_10min": 0,  # default value or fetch real value
+                "user_agent": "Mozilla/5.0",         # dummy or extract from headers if needed
+            }
+            for i in range(78):
+                features_dict[f"flow_feature_{i}"] = 0.0
+            X = pd.DataFrame([features_dict])
+            proba = float(ensemble_model.predict_proba(X)[0, 1])
         else:
-            raise ValueError("No model loaded")
-    except Exception:
-        prob = 0.99 if req.time_to_submit < 0.5 else 0.01
-    label = "Attack" if prob >= 0.5 else "Benign"
+            raise ValueError("No ensemble model loaded")
+    except Exception as e:
+        logging.warning(f"Ensemble prediction failed: {e}")
+        proba = 0.99 if req.time_to_submit < 0.5 else 0.01
+
+    label = "Attack" if proba >= 0.5 else "Benign"
 
     # 3) Log attempt
     attempt = LoginAttempt(
@@ -125,7 +129,7 @@ def login(req: LoginRequest, session: Session = Depends(get_session)):
         timestamp=datetime.utcnow(),
         time_to_submit=req.time_to_submit,
         label=label,
-        score=round(prob, 2)
+        score=round(proba, 2)
     )
     session.add(attempt)
     session.commit()
@@ -143,9 +147,8 @@ def login(req: LoginRequest, session: Session = Depends(get_session)):
         "account": "ACCT-1234"
     }
 
-
 # --- Admin-only attack log endpoint ---
-@app.get("/attacks")
+@app.get("/api/attacks")
 def get_attacks(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
@@ -168,8 +171,7 @@ def get_attacks(
         for a in attempts
     ]
 
-
 # --- Public health check ---
-@app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok"}
