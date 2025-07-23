@@ -1,80 +1,83 @@
-services:
+version: "3.8"
 
+services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
-    container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-    ports:
-      - "2181:2181"
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
-    container_name: kafka
     depends_on:
       - zookeeper
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
-
-  nginx:
-    build:
-      context: ./infra/nginx
-      dockerfile: Dockerfile
-    container_name: nginx
-    depends_on:
-      - kafka
-    ports:
-      - "80:80"
-
-  redis:
-    image: redis:6
-    container_name: redis
-    ports:
-      - "6379:6379"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   postgres:
-    image: postgres:13
-    container_name: postgres
+    image: postgres:15
+    restart: always
     environment:
-      POSTGRES_DB: botdb
       POSTGRES_USER: botuser
       POSTGRES_PASSWORD: botpass
+      POSTGRES_DB: botdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-
-  bot-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: bot-api
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    depends_on:
-      - kafka
-      - redis
-      - postgres
-    ports:
-      - "8000:8000"
 
   feature-extractor:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: feature-extractor
-    command: python -u -m app.consumers.feature_extractor
+      dockerfile: Dockerfile.feature-extractor
     depends_on:
       - kafka
-  
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
   scorer:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: scorer
-    command: python -u -m app.consumers.scorer
+      dockerfile: Dockerfile.scorer
     depends_on:
       - kafka
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MODEL_PATH: /app/model/final_lightgbm_tuned.txt
 
+  bot-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8000:8000"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MODEL_PATH: /app/notebooks/final_lightgbm_tuned.txt
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: botuser
+      DB_PASSWORD: botpass
+      DB_NAME: botdb
+      JWT_SECRET: your_jwt_secret_here
+      JWT_ALGORITHM: HS256
 
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    depends_on:
+      - bot-api
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:

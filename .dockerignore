@@ -1,0 +1,32 @@
+# Ignore Python virtual environments
+.venv/
+env/
+venv/
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints
+
+# Ignore git stuff
+.git
+.gitignore
+.gitattributes
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore data and large files
+data/raw/
+data/processed/
+*.zip
+
+# Ignore everything in notebooks except code (optional)
+notebooks/*.ipynb
+
+# But DO NOT ignore requirements.txt, Dockerfile, or docker-compose.yml
+!requirements.txt
+!Dockerfile*
+!docker-compose.yml
+
+# Explicitly include app/models/
+!app/models/

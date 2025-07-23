@@ -1,0 +1,107 @@
+/* ─── 0) REMOVE SCROLLBAR & FULL-PAGE BACKGROUND ─── */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;   /* no vertical scroll */
+}
+
+body {
+  /* mirror your login-container image as the page background */
+  background: url("D:\Canada\Subjects\Semester -2\AIDI-2005-02 CAPSTONE TERM ll\Bot_detector\bot-detector-ui\Images\5630939.jpg")
+              center/cover no-repeat fixed;
+}
+
+/* ─── 1) YOUR ORIGINAL CSS, UNCHANGED ───────────────────────────────── */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: url("D:\Canada\Subjects\Semester -2\AIDI-2005-02 CAPSTONE TERM ll\Bot_detector\bot-detector-ui\Images\5630939.jpg");
+  background-repeat: no-repeat;           /* don’t tile */
+  background-position: center center;
+  background-size: cover;                 /* cover, contain, or exact dimensions */
+  background-attachment: fixed;           
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 250px;                    /* a bit wider for breathing room */
+  padding: 5rem;                       /* balanced padding */
+  border-radius: 20px;                 /* softer corners */
+  
+  /* Glass effect */
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  /* Deeper shadow for “lifted” look */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  
+  color: #ffffff;
+  text-align: center;
+}
+
+.login-form h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.login-form label {
+  display: block;
+  margin: 0.75rem 0 0.25rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  text-align: left;
+}
+
+.login-form input {
+  width: 90%;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  margin-bottom: 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+
+  background: rgba(255, 255, 255, 0.85);
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form input:focus {
+  outline: none;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+}
+
+.login-form button {
+  width: 100%;
+  height: 2.5rem;
+  margin-top: 0.8rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  /* subtle two‑tone gradient */
+  background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.login-form .error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}

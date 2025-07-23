@@ -34,15 +34,15 @@ def main():
     model = LGBMClassifier(n_estimators=100, learning_rate=0.1, random_state=42)
     model.fit(X_train, y_train)
 
-    print("📊 Evaluating on test set…")
+    print(" Evaluating on test set…")
     preds = model.predict_proba(X_test)[:, 1]
     auc = roc_auc_score(y_test, preds)
-    print(f"➡️ Test ROC-AUC: {auc:.4f}")
+    print(f" Test ROC-AUC: {auc:.4f}")
 
     # Serialize (None, model) so scorer can load it
     os.makedirs(os.path.dirname(args.model_out), exist_ok=True)
     joblib.dump((None, model), args.model_out)
-    print("💾 Saved model to", args.model_out)
+    print(" Saved model to", args.model_out)
 
 if __name__ == "__main__":
     main()

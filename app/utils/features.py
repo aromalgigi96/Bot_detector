@@ -1,36 +1,55 @@
 # app/utils/features.py
 
-from typing import Dict
-from collections import defaultdict
+import time
+import math
+from urllib.parse import urlparse
 
-# keep state per client IP
-_session_state = defaultdict(lambda: {"last_timestamp": None})
+# Example feature extraction: adjust as needed.
+# raw_event is a dict, e.g. {"client_ip": "...", "method": "GET", "uri": "/path?query", "timestamp": 123456789}
+# Return: dict of feature_name: float
+def extract_features(raw_event: dict) -> dict:
+    """
+    Given a single raw_event dictionary, compute features as a dict.
+    Adjust fields & logic for your domain.
+    """
+    features = {}
 
-def extract_features(event: Dict) -> Dict:
-    features: Dict[str, float] = {}
-
-    # 1) HTTP method one-hot
-    method = event.get("method", "GET").upper()
-    features["is_get"]  = 1.0 if method == "GET" else 0.0
+    # Example: HTTP method one-hot or binary flags
+    method = raw_event.get("method", "").upper()
+    features["is_get"] = 1.0 if method == "GET" else 0.0
     features["is_post"] = 1.0 if method == "POST" else 0.0
+    # You can add other methods if needed: PUT, DELETE, etc.
 
-    # 2) URI length & depth
-    uri = event.get("uri", "")
+    # URI-based features
+    uri = raw_event.get("uri", "")
+    # length of path
     features["uri_length"] = float(len(uri))
-    features["uri_depth"]  = float(max(0, len(uri.split("/")) - 1))
-
-    # 3) Inter-arrival time
-    ts = float(event.get("timestamp", 0.0))
-    state = _session_state[event.get("client_ip", "")]
-    last = state["last_timestamp"]
-    features["inter_arrival"] = (ts - last) if last is not None else 0.0
-    state["last_timestamp"] = ts
-
-    # 4) Last octet of client IP
+    # depth = number of "/" segments (excluding query)
     try:
-        octets = event.get("client_ip", "").split(".")
-        features["ip_last_octet"] = float(int(octets[-1])) if len(octets)==4 else 0.0
-    except:
+        path = urlparse(uri).path
+        # count non-empty segments
+        depth = sum(1 for seg in path.split("/") if seg)
+        features["uri_depth"] = float(depth)
+    except Exception:
+        features["uri_depth"] = 0.0
+
+    # Timestamp: you might compute inter-arrival if you maintain state (outside scope here).
+    # For a stateless single-event example, set inter_arrival = 0 or skip.
+    features["inter_arrival"] = 0.0
+
+    # IP-based features: last octet numeric?
+    client_ip = raw_event.get("client_ip", "")
+    try:
+        # naive: split by ".", take last octet
+        octets = client_ip.strip().split(".")
+        last = int(octets[-1]) if len(octets) == 4 else 0
+        features["ip_last_octet"] = float(last)
+    except Exception:
         features["ip_last_octet"] = 0.0
+
+    # Add more features based on your dataset:
+    # e.g. bytes sent, header counts, user-agent features, etc.
+    # features["some_custom_feature"] = ...
+    # For any missing field, you can set defaults.
 
     return features

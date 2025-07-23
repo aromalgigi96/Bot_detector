@@ -1,0 +1,33 @@
+# Dockerfile.api
+
+FROM python:3.11-slim
+
+# 1) System deps for compilation & speed
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      build-essential \
+      libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
+
+# 2) Set working dir
+WORKDIR /app
+
+# 3) Copy & install your app’s pinned deps
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 4) Install async ORM, SQLite driver (if you ever fallback), migrations & hashing
+#    — and the asyncpg driver for Postgres
+RUN pip install --no-cache-dir \
+      sqlalchemy[asyncio] \
+      alembic \
+      aiosqlite \
+      asyncpg \
+      passlib[bcrypt]
+
+# 5) Copy your code & model artifact
+COPY app       ./app
+COPY notebooks/final_lightgbm_tuned.txt ./notebooks/final_lightgbm_tuned.txt
+
+# 6) Launch Uvicorn pointing at your FastAPI app
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,17 @@
+# Dockerfile.nginx
+FROM openresty/openresty:1.21.4.1-4-alpine-fat
+
+# install git & certificates (so we can clone the Lua library), then remove git
+RUN apk update \
+ && apk add --no-cache git ca-certificates \
+ && git clone --depth=1 \
+      https://github.com/doujiang24/lua-resty-kafka.git \
+      /usr/local/openresty/lualib/resty/kafka \
+ && apk del git
+
+# copy in your Nginx config and Lua script
+COPY infra/nginx/nginx.conf    /usr/local/openresty/nginx/conf/nginx.conf
+COPY infra/nginx/lua/extract.lua /etc/nginx/extract.lua
+
+# run OpenResty in the foreground
+CMD ["/usr/local/openresty/bin/openresty", "-g", "daemon off;"]

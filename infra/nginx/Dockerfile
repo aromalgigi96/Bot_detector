@@ -1,13 +1,11 @@
 # infra/nginx/Dockerfile
+FROM openresty/openresty:1.21.4.1-4-alpine
 
-FROM openresty/openresty:alpine
+# install build tools + luarocks
+RUN apk add --no-cache build-base openssl-dev luarocks \
+  && luarocks install lua-resty-kafka \
+  && apk del build-base openssl-dev luarocks
 
-# 1) Install the tools OPM needs
-RUN apk add --no-cache curl bash perl
-
-# 2) Use OPM to fetch a maintained lua-resty-kafka client
-RUN /usr/local/openresty/bin/opm get doujiang24/lua-resty-kafka
-
-# 3) Copy in your NGINX config & Lua scripts
-COPY nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
-COPY lua/           /usr/local/openresty/nginx/lua/
+# copy your config + lua
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY lua/extract.lua /etc/nginx/extract.lua
