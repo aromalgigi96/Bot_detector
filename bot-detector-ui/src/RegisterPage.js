@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './RegisterPage.css';
 
 export default function RegisterPage() {
   const [username, setUsername] = useState('');
@@ -18,11 +19,13 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
+
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.detail || 'Registration failed');
       }
-      setSuccess('Registered! Redirecting to login…');
+
+      setSuccess('🎉 Registered! Redirecting to login…');
       setTimeout(() => navigate('/'), 2000);
     } catch (err) {
       setError(err.message);
@@ -30,28 +33,32 @@ export default function RegisterPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Register</h2>
-      <label>
-        Username:
+    <div className="register-container">
+      <form onSubmit={handleSubmit} className="register-form">
+        <h2>Register</h2>
+
+        <label htmlFor="username">Username:</label>
         <input
+          id="username"
           value={username}
           onChange={e => setUsername(e.target.value)}
           required
         />
-      </label>
-      <label>
-        Password:
+
+        <label htmlFor="password">Password:</label>
         <input
+          id="password"
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
         />
-      </label>
-      <button type="submit">Register</button>
-      {error && <p className="attack">{error}</p>}
-      {success && <p className="benign">{success}</p>}
-    </form>
+
+        {error && <p className="error">{error}</p>}
+        {success && <p className="success">{success}</p>}
+
+        <button type="submit">Register</button>
+      </form>
+    </div>
   );
 }

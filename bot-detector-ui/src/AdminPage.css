@@ -1,0 +1,73 @@
+.navbar a[href="/dashboard"] {
+  display: none !important;
+}
+
+.admin-container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.admin-title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+}
+
+/* Wrapper for table scroll (NEW) */
+.admin-table-wrapper {
+  max-height: 65vh;      /* Set scroll area, adjust as needed */
+  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  background: #fff;
+}
+
+/* Table styling */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Sticky header for table */
+.admin-table th {
+  background-color: #34495e;
+  color: #ecf0f1;
+  padding: 0.75rem;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.admin-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ddd;
+  color: #2c3e50;
+  background: #fff;
+}
+
+.admin-table tr:hover {
+  background-color: #f0f8ff;
+}
+
+.badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-weight: bold;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.badge.attack {
+  background-color: #e74c3c;
+}
+
+.badge.benign {
+  background-color: #2ecc71;
+}

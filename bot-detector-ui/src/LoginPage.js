@@ -1,6 +1,7 @@
 import React, { useState, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
+import './LoginPage.css';
 
 export default function LoginPage() {
   const { setToken } = useContext(AuthContext);
@@ -20,7 +21,7 @@ export default function LoginPage() {
       username,
       password,
       uri: '/login',
-      client_ip: '203.0.113.5',
+      client_ip: '203.0.113.5', // Use actual client IP if possible
       timestamp: Math.floor(Date.now() / 1000),
       time_to_submit
     };
@@ -61,31 +62,36 @@ export default function LoginPage() {
     localStorage.setItem('account', data.account);
     localStorage.setItem('balance', data.balance);
 
-    navigate('/dashboard');
+    // Redirect based on username
+    if (username.trim().toLowerCase() === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Login</h2>
-      <label>
-        Username:
+    <div className="login-container">
+      <form onSubmit={handleSubmit} className="login-form">
+        <h2>Login</h2>
+        <label htmlFor="username">Username</label>
         <input
+          id="username"
           value={username}
           onChange={e => setUsername(e.target.value)}
           required
         />
-      </label>
-      <label>
-        Password:
+        <label htmlFor="password">Password</label>
         <input
+          id="password"
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
         />
-      </label>
-      <button type="submit">Log In</button>
-      {error && <p className="attack">{error}</p>}
-    </form>
+        {error && <p className="error">{error}</p>}
+        <button type="submit">Log In</button>
+      </form>
+    </div>
   );
 }
