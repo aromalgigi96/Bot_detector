@@ -1,4 +1,4 @@
-# 🛡️ AI-Powered Web Activity Firewall: Real-Time Bot Detection for a Secure Digital Frontier
+# 🛡️ AI-Powered Web Activity Firewall: Real-Time Bot Detection 
 
 ## ✨ Project Overview
 **Bot Detector** is a real-time, scalable AI-powered firewall designed to detect and mitigate automated threats across web and network environments. It combines behavioral analytics with deep network-flow profiling to identify bot-driven attacks and anomalous user behavior—without compromising user experience.
